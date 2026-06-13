@@ -1,6 +1,0 @@
-timestamp,thread_id,thread_type,action,target_resource,resource_type,duration_ms,timeout_threshold
-0,P1,UI,LOCK,MQ1,Message_Queue,null,5000
-10,P2,WORKER,LOCK,MQ1,Message_Queue,null,null
-15,P3,WORKER,LOCK,MQ1,Message_Queue,null,null
-20,P4,WORKER,LOCK,MQ1,Message_Queue,null,null
-25,P5,WORKER,LOCK,MQ1,Message_Queue,null,null

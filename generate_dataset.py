@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate synthetic lock datasets for scalability experiments."""
+"""Generate Topic 3 datasets using only the required CSV columns."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ import argparse
 import csv
 import random
 from pathlib import Path
+from typing import List
 
 
 def generate_dataset(
@@ -14,81 +15,65 @@ def generate_dataset(
     processes: int,
     resources: int,
     events: int,
-    seed: int,
-    force_deadlock: bool,
+    seed: int = 42,
+    force_deadlock: bool = True,
 ) -> None:
+    if processes < 2 or resources < 2:
+        raise ValueError("processes and resources must be >= 2")
+
     random.seed(seed)
     process_ids = [f"P{i}" for i in range(1, processes + 1)]
     resource_ids = [f"R{i}" for i in range(1, resources + 1)]
 
-    rows = []
-    timestamp = 0
+    rows: List[List[object]] = []
+    logical_time = 0
 
     if force_deadlock:
-        cycle_len = min(processes, resources, max(2, min(5, processes, resources)))
+        cycle_len = min(processes, resources)
+
+        # Step 1: each process owns one resource.
         for i in range(cycle_len):
-            rows.append([timestamp, process_ids[i], "WORKER", "LOCK", resource_ids[i], "Mutex", "null", "null"])
-            timestamp += 10
+            rows.append([logical_time, process_ids[i], "request", resource_ids[i]])
+            logical_time += 1
+
+        # Step 2: create a circular wait P1->P2->...->Pn->P1.
         for i in range(cycle_len):
-            rows.append([
-                timestamp,
-                process_ids[i],
-                "WORKER",
-                "LOCK",
-                resource_ids[(i + 1) % cycle_len],
-                "Mutex",
-                "null",
-                "null",
-            ])
-            timestamp += 10
+            rows.append([logical_time, process_ids[i], "request", resource_ids[(i + 1) % cycle_len]])
+            logical_time += 1
 
     while len(rows) < events:
-        duration = random.choice(["null", 50, 100, 500])
         rows.append([
-            timestamp,
+            logical_time,
             random.choice(process_ids),
-            random.choice(["UI", "WORKER"]),
-            "LOCK",
+            "request",
             random.choice(resource_ids),
-            random.choice(["Mutex", "Message_Queue"]),
-            duration,
-            random.choice(["null", 5000]),
         ])
-        timestamp += random.randint(1, 20)
+        logical_time += 1
 
     output.parent.mkdir(parents=True, exist_ok=True)
-    with output.open("w", newline="") as file:
+    with output.open("w", newline="", encoding="utf-8") as file:
         writer = csv.writer(file)
-        writer.writerow([
-            "timestamp",
-            "thread_id",
-            "thread_type",
-            "action",
-            "target_resource",
-            "resource_type",
-            "duration_ms",
-            "timeout_threshold",
-        ])
+        writer.writerow(["time", "process_id", "action", "resource_id"])
         writer.writerows(rows[:events])
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate a synthetic deadlock dataset.")
+    parser = argparse.ArgumentParser(description="Generate a Topic 3 Wait-for Graph dataset.")
     parser.add_argument("output", type=Path)
-    parser.add_argument("--processes", type=int, default=30)
-    parser.add_argument("--resources", type=int, default=30)
-    parser.add_argument("--events", type=int, default=1000)
+    parser.add_argument("--processes", type=int, default=20)
+    parser.add_argument("--resources", type=int, default=20)
+    parser.add_argument("--events", type=int, default=200)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--no-deadlock", action="store_true")
     args = parser.parse_args()
 
     generate_dataset(
-        args.output,
-        args.processes,
-        args.resources,
-        args.events,
-        args.seed,
-        not args.no_deadlock,
+        output=args.output,
+        processes=args.processes,
+        resources=args.resources,
+        events=args.events,
+        seed=args.seed,
+        force_deadlock=not args.no_deadlock,
     )
 
 

@@ -1,6 +1,0 @@
-timestamp,thread_id,thread_type,action,target_resource,resource_type,duration_ms,timeout_threshold
-0,P2,WORKER,LOCK,M1,Mutex,null,null
-5,P3,WORKER,LOCK,M2,Mutex,null,null
-10,P1,UI,LOCK,M1,Mutex,null,5000
-15,P2,WORKER,LOCK,M2,Mutex,null,null
-20,P3,WORKER,LOCK,M1,Mutex,null,null
