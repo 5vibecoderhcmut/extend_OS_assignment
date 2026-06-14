@@ -1,110 +1,134 @@
-# Deadlock Detection using Wait-for Graph
+# Topic 3: Deadlock Detection using Wait-for Graph
 
-This project follows **Topic 3: Deadlock Detection** from the assignment specification.
-It simulates how a Wait-for Graph is formed over logical time and detects deadlock by checking whether the graph contains a directed cycle.
+This version is arranged for output checking before plotting.
 
-## Input format
+## Dataset groups
 
-Only the required Topic 3 CSV format is used:
+The dataset folder now contains four groups. Each group has five CSV files: one original controlled-random case plus four additional pseudo-random cases.
+
+```text
+datasets/
+├── small/       # <= 5 processes, 5 files
+├── medium/      # 6 to 19 processes, 5 files
+├── large/       # 20 to 35 processes, 5 files
+└── very_large/  # > 35 processes, 5 files
+```
+
+All CSV files use the Topic 3 format:
 
 ```csv
 time,process_id,action,resource_id
 0,P1,request,R1
-1,P2,request,R2
 ```
 
-No extra columns such as `thread_type`, `duration`, `timeout`, `lock_type`, or `priority` are used.
-The only supported action is:
+The datasets are pseudo-random but controlled:
 
-```text
-request
-```
+- each process first acquires a unique resource;
+- extra wait edges are added in an acyclic way;
+- one closing wait edge creates the first deadlock;
+- additional neutral events are added after the deadlock so K = 2, 5, and 10 can produce non-zero latency.
 
-## Simulation model
-
-For each request event:
-
-1. If the resource is free, it is granted to the requesting process.
-2. If the resource is already held by another process, the requesting process waits.
-3. If `Pi` waits for a resource held by `Pj`, the simulator adds edge `Pi -> Pj` to the Wait-for Graph.
-4. Deadlock exists when the Wait-for Graph has a cycle.
-
-There is no recovery, rollback, timeout, lock ordering, or victim selection in this version because those belong to other topics.
-
-## Files
-
-```text
-deadlock_simulator.py   Core simulator and DFS/BFS cycle detection
-generate_dataset.py     Generate a large Topic 3 dataset with the required CSV format
-run_experiments.py      Run K-interval experiments and write results/experiment_summary.csv
-datasets/               Small and large datasets using only the required columns
-run.sh                  Simple shell script for demo
-Makefile                Convenience commands
-```
-
-## Run a single dataset
-
-Detect after every event:
-
-```bash
-python3 deadlock_simulator.py datasets/small_deadlock.csv -k 1 --algorithm dfs
-```
-
-Detect every 5 events:
-
-```bash
-python3 deadlock_simulator.py datasets/small_deadlock.csv -k 5 --algorithm dfs
-```
-
-Print the Wait-for Graph after each event:
-
-```bash
-python3 deadlock_simulator.py datasets/small_deadlock.csv -k 1 --algorithm dfs --trace
-```
+The cycles are not simple full-ring cycles over all processes.
 
 ## Run experiments
 
 ```bash
-python3 run_experiments.py
+make all
 ```
 
 or:
 
 ```bash
-make experiment
+./run.sh
 ```
 
-This writes:
+To run only one group:
+
+```bash
+make small
+make medium
+make large
+make very_large
+```
+
+## Output files
+
+The script creates:
 
 ```text
-results/experiment_summary.csv
+results/
+├── experiment_results.csv
+├── group_summary.csv
+└── experiment_config.json
 ```
 
-## Metrics
+### experiment_results.csv
 
-The experiment output includes the metrics required by Topic 3:
+One row per:
 
-- `avg_detection_time_seconds`: average time for one detection call.
-- `detection_frequency`: number of scheduled detection calls.
-- `detection_latency`: first detected deadlock time minus first actual deadlock time.
-- `detection_overhead_seconds`: `avg_detection_time_seconds * detection_frequency`.
+```text
+1 dataset × 1 algorithm × 1 K
+```
 
-Additional graph-size metrics are included to support scalability analysis:
+The output is already averaged over repeated runs. If `--repeat 5`, it does not print five raw duplicate rows.
 
-- `avg_wait_for_nodes`
-- `avg_wait_for_edges`
-- `max_wait_for_nodes`
-- `max_wait_for_edges`
+### group_summary.csv
 
-## Dataset policy
+One row per:
 
-The repository keeps only two ready-to-run datasets:
+```text
+1 dataset group × 1 algorithm × 1 K
+```
 
-- `small_deadlock.csv`: 5-process sample dataset.
-- `large_deadlock.csv`: generated dataset with at least 20 processes.
+This file has the same column structure as `experiment_results.csv`, but the numeric values are averaged across all five datasets in the group.
 
-Both files use exactly:
+Columns:
 
-```csv
-time,process_id,action,resource_id
+```text
+dataset_group
+dataset_file
+process_count
+resource_count
+event_count
+algorithm
+detection_interval
+runs
+deadlock_detected
+actual_deadlock_time
+detected_deadlock_time
+detection_latency
+detection_frequency
+detection_time_seconds
+detection_overhead_seconds
+max_wait_for_edges
+```
+
+In `group_summary.csv`, `dataset_file` is set to `GROUP_AVERAGE`, and `runs` means the total number of simulation runs used for that group average.
+
+## Plotting
+
+Plotting is still optional and is not run by default.
+
+```bash
+make plot
+```
+
+
+## Group-based plots
+
+After running experiments, create report-ready plots with:
+
+```bash
+make plot
+```
+
+The plotting script reads `results/group_summary.csv` for group-level charts and `results/experiment_results.csv` for the WFG-edge scatter plot. The generated figures are:
+
+```text
+plots/latency_vs_k_by_group.png
+plots/overhead_vs_k_by_group.png
+plots/frequency_vs_k_by_group.png
+plots/detection_time_by_group_dfs_bfs.png
+plots/overhead_by_group_dfs_bfs.png
+plots/detection_time_vs_edges.png
 ```
