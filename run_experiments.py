@@ -1,15 +1,3 @@
-#!/usr/bin/env python3
-"""Run Topic 3 experiments from existing CSV datasets.
-
-This script scans a dataset folder recursively, runs each CSV file with selected
-algorithms and detection intervals, repeats each configuration if requested, and writes:
-
-1. results/experiment_results.csv  : averaged rows per dataset x algorithm x K
-2. results/group_summary.csv       : averaged rows per group x algorithm x K
-
-No dataset generation is performed here.
-"""
-
 from __future__ import annotations
 
 import argparse

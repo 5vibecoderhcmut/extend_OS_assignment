@@ -1,13 +1,3 @@
-#!/usr/bin/env python3
-"""Create group-based plots from experiment output.
-
-This script reads:
-  - results/group_summary.csv       : group-level averages
-  - results/experiment_results.csv  : per-dataset averaged results
-
-It does not rerun the simulator.
-"""
-
 from __future__ import annotations
 
 import argparse

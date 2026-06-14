@@ -1,21 +1,3 @@
-#!/usr/bin/env python3
-"""Deadlock detection simulator using a Wait-for Graph.
-
-This version follows the Topic 3 specification only.
-
-Input CSV format:
-    time,process_id,action,resource_id
-
-Supported action:
-    request
-
-Model:
-- If a requested resource is free, it is granted to the process.
-- If a requested resource is already held by another process, the requester waits.
-- The Wait-for Graph contains edge Pi -> Pj if Pi waits for a resource held by Pj.
-- Deadlock exists when the Wait-for Graph contains a directed cycle.
-"""
-
 from __future__ import annotations
 
 import argparse
