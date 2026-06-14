@@ -27,6 +27,32 @@ The datasets are pseudo-random but controlled:
 
 The cycles are not simple full-ring cycles over all processes.
 
+##Setup Environment
+### Create a virtual environment
+
+Using Python venv:
+```bash
+python -m venv .venv
+```
+
+Activate the virtual environment:
+
+Linux/macOS
+```bash
+source .venv/bin/activate
+```
+
+Windows (PowerShell)
+```bash
+.venv\Scripts\Activate.ps1
+```
+
+### Install dependencies
+
+Install required Python packages:
+```bash
+pip install -r requirements.txt
+```
 ## Run experiments
 
 ```bash
