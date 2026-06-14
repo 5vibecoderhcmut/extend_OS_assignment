@@ -1,23 +1,29 @@
 PYTHON ?= python3
+DATASET_DIR ?= datasets
+RESULT_DIR ?= results
+PLOT_DIR ?= plots
 
-.PHONY: run small large trace experiment generate clean
+.PHONY: all experiment plot small medium large very_large clean
 
-run: small
-
-small:
-	$(PYTHON) deadlock_simulator.py datasets/small_deadlock.csv -k 1 --algorithm dfs
-
-large:
-	$(PYTHON) deadlock_simulator.py datasets/large_deadlock.csv -k 10 --algorithm dfs
-
-trace:
-	$(PYTHON) deadlock_simulator.py datasets/small_deadlock.csv -k 1 --algorithm dfs --trace
+all: experiment
 
 experiment:
-	$(PYTHON) run_experiments.py --output results/experiment_summary.csv
+	$(PYTHON) run_experiments.py --dataset-dir $(DATASET_DIR) --output-dir $(RESULT_DIR) --algorithms dfs bfs --k 1 2 5 10 --repeat 5
 
-generate:
-	$(PYTHON) generate_dataset.py datasets/large_deadlock.csv --processes 20 --resources 20 --events 200 --seed 42
+plot:
+	$(PYTHON) plot_results.py --results-dir $(RESULT_DIR) --output-dir $(PLOT_DIR)
+
+small:
+	$(PYTHON) run_experiments.py --dataset-dir $(DATASET_DIR) --output-dir $(RESULT_DIR)/small --groups small --algorithms dfs bfs --k 1 2 5 10 --repeat 5
+
+medium:
+	$(PYTHON) run_experiments.py --dataset-dir $(DATASET_DIR) --output-dir $(RESULT_DIR)/medium --groups medium --algorithms dfs bfs --k 1 2 5 10 --repeat 5
+
+large:
+	$(PYTHON) run_experiments.py --dataset-dir $(DATASET_DIR) --output-dir $(RESULT_DIR)/large --groups large --algorithms dfs bfs --k 1 2 5 10 --repeat 5
+
+very_large:
+	$(PYTHON) run_experiments.py --dataset-dir $(DATASET_DIR) --output-dir $(RESULT_DIR)/very_large --groups very_large --algorithms dfs bfs --k 1 2 5 10 --repeat 5
 
 clean:
-	rm -rf results __pycache__ .pytest_cache
+	rm -rf results plots __pycache__ .pytest_cache

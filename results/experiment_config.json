@@ -1,0 +1,40 @@
+{
+  "created_at": "2026-06-14T17:29:00",
+  "dataset_dir": "datasets",
+  "output_dir": "results",
+  "algorithms": [
+    "dfs",
+    "bfs"
+  ],
+  "k_values": [
+    1,
+    2,
+    5,
+    10
+  ],
+  "repeat": 5,
+  "groups": null,
+  "dataset_count": 20,
+  "datasets": [
+    "small/small_random_4p_case02.csv",
+    "small/small_random_5p.csv",
+    "small/small_random_5p_case03.csv",
+    "small/small_random_5p_case04.csv",
+    "small/small_random_5p_case05.csv",
+    "medium/medium_random_12p.csv",
+    "medium/medium_random_14p_case03.csv",
+    "medium/medium_random_16p_case04.csv",
+    "medium/medium_random_18p_case05.csv",
+    "medium/medium_random_9p_case02.csv",
+    "large/large_random_22p_case02.csv",
+    "large/large_random_25p_case03.csv",
+    "large/large_random_28p.csv",
+    "large/large_random_31p_case04.csv",
+    "large/large_random_34p_case05.csv",
+    "very_large/very_large_random_38p_case02.csv",
+    "very_large/very_large_random_42p.csv",
+    "very_large/very_large_random_45p_case03.csv",
+    "very_large/very_large_random_48p_case04.csv",
+    "very_large/very_large_random_52p_case05.csv"
+  ]
+}
