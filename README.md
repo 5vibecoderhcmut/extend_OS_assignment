@@ -1,7 +1,4 @@
 # Topic 3: Deadlock Detection using Wait-for Graph
-
-This version is arranged for output checking before plotting.
-
 ## Dataset groups
 
 The dataset folder now contains four groups. Each group has five CSV files: one original controlled-random case plus four additional pseudo-random cases.
