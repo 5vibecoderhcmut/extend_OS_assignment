@@ -1,36 +1,30 @@
-# Topic 3: Deadlock Detection using Wait-for Graph
+# Topic 3: Deadlock Detection using Wait-for Graph (C Version)
 
-This version is arranged for output checking before plotting.
+This project is a full C implementation of the Topic 3 deadlock detection simulator. It reads the provided CSV datasets, builds a Wait-for Graph after each event, detects cycles with DFS or BFS/Kahn's algorithm, and exports experiment results as CSV files.
 
-## Dataset groups
+No Python runtime, `pandas`, or `matplotlib` is required. The plotting utility is also written in C and produces SVG figures.
 
-The dataset folder now contains four groups. Each group has five CSV files: one original controlled-random case plus four additional pseudo-random cases.
+## Source layout
 
 ```text
-datasets/
-├── small/       # <= 5 processes, 5 files
-├── medium/      # 6 to 19 processes, 5 files
-├── large/       # 20 to 35 processes, 5 files
-└── very_large/  # > 35 processes, 5 files
+src/
+├── deadlock_core.h        # shared data structures and public functions
+├── deadlock_core.c        # CSV reader, resource simulator, WFG builder, DFS and BFS detection
+├── deadlock_simulator.c   # single-dataset CLI for tracing one simulation
+├── run_experiments.c      # batch experiment runner and group-level summaries
+└── plot_results.c         # C-based SVG chart generator
 ```
 
-All CSV files use the Topic 3 format:
+## Build requirements
 
-```csv
-time,process_id,action,resource_id
-0,P1,request,R1
+The project targets Linux/WSL and requires only:
+
+```bash
+sudo apt update
+sudo apt install build-essential make
 ```
 
-The datasets are pseudo-random but controlled:
-
-- each process first acquires a unique resource;
-- extra wait edges are added in an acyclic way;
-- one closing wait edge creates the first deadlock;
-- additional neutral events are added after the deadlock so K = 2, 5, and 10 can produce non-zero latency.
-
-The cycles are not simple full-ring cycles over all processes.
-
-## Run experiments
+## Build and run experiments
 
 ```bash
 make all
@@ -42,18 +36,30 @@ or:
 ./run.sh
 ```
 
-To run only one group:
+This command compiles the C programs and runs every CSV dataset with:
 
-```bash
-make small
-make medium
-make large
-make very_large
+```text
+Algorithms : DFS and BFS
+K values   : 1, 2, 5, 10
+Repeats    : 5 timing runs per configuration
 ```
 
-## Output files
+The five repeated runs are averaged internally. The CSV output contains one average row per:
 
-The script creates:
+```text
+1 dataset × 1 algorithm × 1 detection interval K
+```
+
+## Run one dataset with a trace
+
+```bash
+make simulator
+./bin/deadlock_simulator datasets/small/small_random_5p.csv -k 5 --algorithm dfs --trace
+```
+
+The trace shows resource ownership and the current Wait-for Graph after each event.
+
+## Result files
 
 ```text
 results/
@@ -62,27 +68,15 @@ results/
 └── experiment_config.json
 ```
 
-### experiment_results.csv
+`experiment_results.csv` contains one row for each dataset, algorithm, and K value.
 
-One row per:
-
-```text
-1 dataset × 1 algorithm × 1 K
-```
-
-The output is already averaged over repeated runs. If `--repeat 5`, it does not print five raw duplicate rows.
-
-### group_summary.csv
-
-One row per:
+`group_summary.csv` has the same columns, but each numeric metric is averaged across the five datasets in the same scale group:
 
 ```text
-1 dataset group × 1 algorithm × 1 K
+small, medium, large, very_large
 ```
 
-This file has the same column structure as `experiment_results.csv`, but the numeric values are averaged across all five datasets in the group.
-
-Columns:
+The output columns are:
 
 ```text
 dataset_group
@@ -103,32 +97,32 @@ detection_overhead_seconds
 max_wait_for_edges
 ```
 
-In `group_summary.csv`, `dataset_file` is set to `GROUP_AVERAGE`, and `runs` means the total number of simulation runs used for that group average.
-
-## Plotting
-
-Plotting is still optional and is not run by default.
+## Generate group-level plots
 
 ```bash
 make plot
 ```
 
-
-## Group-based plots
-
-After running experiments, create report-ready plots with:
-
-```bash
-make plot
-```
-
-The plotting script reads `results/group_summary.csv` for group-level charts and `results/experiment_results.csv` for the WFG-edge scatter plot. The generated figures are:
+The C plotting program reads `group_summary.csv` and `experiment_results.csv` and writes SVG figures to `plots/`:
 
 ```text
-plots/latency_vs_k_by_group.png
-plots/overhead_vs_k_by_group.png
-plots/frequency_vs_k_by_group.png
-plots/detection_time_by_group_dfs_bfs.png
-plots/overhead_by_group_dfs_bfs.png
-plots/detection_time_vs_edges.png
+plots/
+├── latency_vs_k_by_group.svg
+├── overhead_vs_k_by_group.svg
+├── frequency_vs_k_by_group.svg
+├── detection_time_by_group_dfs_bfs.svg
+├── overhead_by_group_dfs_bfs.svg
+└── detection_time_vs_edges.svg
+```
+
+SVG files can be opened directly in a browser or used as screenshots for the experimental-results section of the report.
+
+## Useful commands
+
+```bash
+make small
+make medium
+make large
+make very_large
+make clean
 ```
