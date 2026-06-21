@@ -1,4 +1,8 @@
 CC ?= gcc
+PYTHON ?= python3
+
+# Header files are stored in include/ and shared by all C source files.
+CPPFLAGS ?= -Iinclude
 CFLAGS ?= -std=c11 -O2 -Wall -Wextra -Wpedantic -D_POSIX_C_SOURCE=200809L
 LDFLAGS ?=
 
@@ -7,14 +11,17 @@ BUILD_DIR := build
 DATASET_DIR ?= datasets
 RESULT_DIR ?= results
 PLOT_DIR ?= plots
+PLOT_SCRIPT := scripts/plot_results.py
 
 CORE_OBJ := $(BUILD_DIR)/deadlock_core.o
+CORE_HEADER := include/deadlock_core.h
 
 .PHONY: all binaries experiment plot simulator small medium large very_large clean
 
+# Compiles and runs the C experiment pipeline. Plotting is intentionally separate.
 all: experiment
 
-binaries: $(BIN_DIR)/deadlock_simulator $(BIN_DIR)/run_experiments $(BIN_DIR)/plot_results
+binaries: $(BIN_DIR)/deadlock_simulator $(BIN_DIR)/run_experiments
 
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
@@ -22,23 +29,21 @@ $(BUILD_DIR):
 $(BIN_DIR):
 	mkdir -p $(BIN_DIR)
 
-$(CORE_OBJ): src/deadlock_core.c src/deadlock_core.h | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -Isrc -c src/deadlock_core.c -o $@
+$(CORE_OBJ): src/deadlock_core.c $(CORE_HEADER) | $(BUILD_DIR)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c src/deadlock_core.c -o $@
 
 $(BIN_DIR)/deadlock_simulator: src/deadlock_simulator.c $(CORE_OBJ) | $(BIN_DIR)
-	$(CC) $(CFLAGS) -Isrc src/deadlock_simulator.c $(CORE_OBJ) $(LDFLAGS) -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) src/deadlock_simulator.c $(CORE_OBJ) $(LDFLAGS) -o $@
 
 $(BIN_DIR)/run_experiments: src/run_experiments.c $(CORE_OBJ) | $(BIN_DIR)
-	$(CC) $(CFLAGS) -Isrc src/run_experiments.c $(CORE_OBJ) $(LDFLAGS) -o $@
-
-$(BIN_DIR)/plot_results: src/plot_results.c | $(BIN_DIR)
-	$(CC) $(CFLAGS) -Isrc src/plot_results.c $(LDFLAGS) -lm -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) src/run_experiments.c $(CORE_OBJ) $(LDFLAGS) -o $@
 
 experiment: $(BIN_DIR)/run_experiments
 	./$(BIN_DIR)/run_experiments --dataset-dir $(DATASET_DIR) --output-dir $(RESULT_DIR) --algorithms dfs bfs --k 1 2 5 10 --repeat 5
 
-plot: $(BIN_DIR)/plot_results
-	./$(BIN_DIR)/plot_results --results-dir $(RESULT_DIR) --output-dir $(PLOT_DIR)
+# Python is used only for visualization. The simulation and experiments are C.
+plot:
+	$(PYTHON) $(PLOT_SCRIPT) --results-dir $(RESULT_DIR) --output-dir $(PLOT_DIR)
 
 simulator: $(BIN_DIR)/deadlock_simulator
 	@echo "Usage: ./$(BIN_DIR)/deadlock_simulator datasets/small/small_random_5p.csv -k 5 --algorithm dfs --trace"

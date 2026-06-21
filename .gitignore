@@ -2,4 +2,7 @@ bin/
 build/
 results/
 plots/
+.venv/
+__pycache__/
+*.pyc
 *.o
