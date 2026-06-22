@@ -345,7 +345,11 @@ int detect_cycle_dfs(const unsigned char *adjacency, int n, CycleResult *result)
     return 0;
 }
 
-int detect_cycle_bfs(const unsigned char *adjacency, int n, CycleResult *result) {
+int detect_cycle_bfs(
+    const unsigned char *adjacency,
+    int n,
+    CycleResult *result
+) {
     int *indegree;
     int *queue;
     int front = 0;
@@ -353,16 +357,22 @@ int detect_cycle_bfs(const unsigned char *adjacency, int n, CycleResult *result)
     int removed = 0;
     int source;
 
-    if (result == NULL || adjacency == NULL || n < 0) {
+    if (adjacency == NULL || n < 0) {
         return 0;
     }
-    memset(result, 0, sizeof(*result));
+
+    /* Kept only for interface compatibility; no cycle reconstruction is done. */
+    if (result != NULL) {
+        memset(result, 0, sizeof(*result));
+    }
+
     if (n == 0) {
         return 0;
     }
 
     indegree = calloc((size_t)n, sizeof(int));
     queue = malloc((size_t)n * sizeof(int));
+
     if (indegree == NULL || queue == NULL) {
         free(indegree);
         free(queue);
@@ -371,12 +381,14 @@ int detect_cycle_bfs(const unsigned char *adjacency, int n, CycleResult *result)
 
     for (source = 0; source < n; ++source) {
         int target;
+
         for (target = 0; target < n; ++target) {
             if (adjacency[(size_t)source * (size_t)n + (size_t)target]) {
                 ++indegree[target];
             }
         }
     }
+
     for (source = 0; source < n; ++source) {
         if (indegree[source] == 0) {
             queue[back++] = source;
@@ -386,10 +398,13 @@ int detect_cycle_bfs(const unsigned char *adjacency, int n, CycleResult *result)
     while (front < back) {
         int node = queue[front++];
         int target;
+
         ++removed;
+
         for (target = 0; target < n; ++target) {
             if (adjacency[(size_t)node * (size_t)n + (size_t)target]) {
                 --indegree[target];
+
                 if (indegree[target] == 0) {
                     queue[back++] = target;
                 }
@@ -400,12 +415,11 @@ int detect_cycle_bfs(const unsigned char *adjacency, int n, CycleResult *result)
     free(indegree);
     free(queue);
 
-    if (removed == n) {
-        return 0;
-    }
-
-    /* Kahn's algorithm established that a cycle exists. Extract a concrete cycle for trace output. */
-    return detect_cycle_dfs(adjacency, n, result);
+    /*
+     * If Kahn cannot remove every node, the remaining subgraph contains
+     * at least one directed cycle.
+     */
+    return removed < n;
 }
 
 static double now_seconds(void) {

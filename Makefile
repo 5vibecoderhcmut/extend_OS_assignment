@@ -1,6 +1,8 @@
 CC ?= gcc
 PYTHON ?= python3
 
+# Header files are stored in include/ and shared by all C source files.
+CPPFLAGS ?= -Iinclude
 CFLAGS ?= -std=c11 -O2 -Wall -Wextra -Wpedantic -D_POSIX_C_SOURCE=200809L
 LDFLAGS ?=
 
@@ -12,6 +14,7 @@ PLOT_DIR ?= plots
 PLOT_SCRIPT := scripts/plot_results.py
 
 CORE_OBJ := $(BUILD_DIR)/deadlock_core.o
+CORE_HEADER := include/deadlock_core.h
 
 .PHONY: all binaries experiment plot simulator small medium large very_large clean
 
@@ -26,14 +29,14 @@ $(BUILD_DIR):
 $(BIN_DIR):
 	mkdir -p $(BIN_DIR)
 
-$(CORE_OBJ): src/deadlock_core.c include/deadlock_core.h | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -Iinclude -c src/deadlock_core.c -o $@
+$(CORE_OBJ): src/deadlock_core.c $(CORE_HEADER) | $(BUILD_DIR)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c src/deadlock_core.c -o $@
 
 $(BIN_DIR)/deadlock_simulator: src/deadlock_simulator.c $(CORE_OBJ) | $(BIN_DIR)
-	$(CC) $(CFLAGS) -Iinclude src/deadlock_simulator.c $(CORE_OBJ) $(LDFLAGS) -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) src/deadlock_simulator.c $(CORE_OBJ) $(LDFLAGS) -o $@
 
 $(BIN_DIR)/run_experiments: src/run_experiments.c $(CORE_OBJ) | $(BIN_DIR)
-	$(CC) $(CFLAGS) -Isrc src/run_experiments.c $(CORE_OBJ) $(LDFLAGS) -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) src/run_experiments.c $(CORE_OBJ) $(LDFLAGS) -o $@
 
 experiment: $(BIN_DIR)/run_experiments
 	./$(BIN_DIR)/run_experiments --dataset-dir $(DATASET_DIR) --output-dir $(RESULT_DIR) --algorithms dfs bfs --k 1 2 5 10 --repeat 5
